@@ -1,0 +1,257 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Directorio de Visitantes{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="d-flex">
+    <!-- Sidebar de navegación -->
+    
+    <nav class="sidebar">
+        <div class="user-info-sidebar d-flex align-items-center justify-content-start flex-column">
+            <img src="https://ui-avatars.com/api/?name={{ user.username }}&background=83cf26&color=fff" class="avatar-sidebar" alt="Avatar">
+            <div class="text-center mt-1">
+                <span class="text-white small d-block">Bienvenido,</span>
+                <span class="fw-bold text-white">{{ user.username }}</span>
+            </div>
+        </div>
+        <div class="menu-items">
+            <a href="{% url 'dashboard' %}" class="menu-item">
+                <i class="bi bi-grid-1x2-fill"></i>
+                <span>Inicio</span>
+            </a>
+            <a href="{% url 'visitor_create' %}" class="menu-item">
+                <i class="bi bi-people-fill"></i>
+                <span>Registro</span>
+            </a>
+            <a href="{% url 'visitor_log' %}" class="menu-item active">
+                <i class="bi bi-book-half"></i>
+                <span>Visitantes</span>
+            </a>
+            <a href="{% url 'visitor_records' %}" class="menu-item">
+                <i class="bi bi-calendar-check-fill"></i>
+                <span>Presentes</span>
+            </a>
+            <a href="{% url 'visitor_reports' %}" class="menu-item">
+                <i class="bi bi-bar-chart-line-fill"></i>
+                <span>Historial</span>
+            </a>
+            {% if user.is_staff or user.is_superuser %}
+            <a href="{% url 'settings_log' %}" class="menu-item">
+                <i class="bi bi-gear-fill"></i>
+                <span>Configuración</span>
+            </a>
+            <a href="{% url 'settings_users' %}" class="menu-item">
+                <i class="bi bi-person-badge-fill"></i>
+                <span>Usuarios</span>
+            </a>
+            {% endif %}
+        </div>
+        <div class="sidebar-footer pb-5">
+            <a href="{% url 'logout' %}" class="menu-item logout">
+                <i class="bi bi-box-arrow-left"></i>
+                <span>Cerrar Sesión</span>
+            </a>
+        </div>
+    </nav>
+
+<main class="main-content" style="margin-left: 260px; width: calc(100% - 260px); min-height: 100vh;">
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="text-success fw-bold mb-0">
+        <i class="bi bi-book-half me-2"></i>Directorio de Visitantes
+    </h3>
+    <div class="col-md-4">
+        <div class="input-group shadow-sm" style="background: white;">
+            <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-success"></i></span>
+            <input type="text" id="searchDirectory" class="form-control border-start-0" placeholder="Buscar por nombre o cédula...">
+        </div>
+    </div>
+</div>
+
+<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4" id="directoryGrid">
+    {% for visitante in visitantes %}
+    <div class="col visitor-item">
+        <div class="card h-100 border-0 shadow-sm overflow-hidden" style="border-radius: 15px; transition: 0.3s;">
+            <div style="height: 200px; overflow: hidden; background: #f8f9fa;" class="position-relative">
+                {% if visitante.foto %}
+                    <img src="{{ visitante.foto.url }}" class="w-100 h-100" style="object-fit: cover;" alt="{{ visitante.nombre_completo }}">
+                {% else %}
+                    <div class="d-flex align-items-center justify-content-center h-100">
+                        <i class="bi bi-person-bounding-box text-muted" style="font-size: 4rem;"></i>
+                    </div>
+                {% endif %}
+                <span class="position-absolute top-0 end-0 m-2 badge {% if visitante.estatus == 'denegado' %}bg-danger{% else %}bg-success{% endif %}">
+                    {{ visitante.get_estatus_display }}
+                </span>
+            </div>
+
+
+
+            <div class="card-body">
+                <h6 class="fw-bold mb-1 text-truncate">{{ visitante.nombre_completo }}</h6>
+                <p class="text-muted small mb-0"><i class="bi bi-card-text me-1"></i> C.I: {{ visitante.cedula }}</p>
+                <p class="text-muted small mb-3"><i class="bi bi-telephone me-1"></i> {{ visitante.telefono|default:"N/A" }}</p>
+                <p class="text-muted small mb-3">
+                <i class="bi bi-clock-history me-1"></i>
+                <strong>Última salida:</strong> {{ visitante.ultima_salida_fecha|date:"d/m/Y"|default:"En sede" }}
+                </p>
+                <div class="d-flex justify-content-between gap-2 border-top pt-3">
+    <a href="{% url 'visitor_edit' visitante.pk %}" class="btn btn-outline-success btn-sm flex-grow-1" title="Editar Visitante">
+        <i class="bi bi-pencil-square"></i>
+    </a>
+
+    <a href="#" class="btn btn-outline-danger btn-sm flex-grow-1" onclick="showDeleteModal('{% url 'visitor_delete' visitante.pk %}', '{{ visitante.nombre_completo }}')" title="Eliminar del Directorio">
+        <i class="bi bi-trash3"></i>
+    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="card h-100 border-0 shadow-sm" style="border-radius: 15px; background: white;">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-people text-muted" style="font-size: 3rem;"></i>
+                <p class="mt-3 text-muted">No se encontraron visitantes en la base de datos.</p>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+</main>
+
+<div id="loader-overlay" class="loader-overlay">
+    <div class="loader-content">
+        <div class="spinner-bav"></div>
+        <p id="loader-text" class="mt-3 text-white fw-bold">Procesando Solicitud...</p>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 15px;">
+            <div class="modal-header bg-danger text-white" style="border-radius: 15px 15px 0 0;">
+                <h5 class="modal-title fw-bold" id="deleteModalLabel">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>Confirmar Eliminación
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <div class="mb-3">
+                    <i class="bi bi-trash3 text-danger" style="font-size: 3rem;"></i>
+                </div>
+                <h6 class="fw-bold mb-3">¿Estás seguro de eliminar a <span id="visitorName" class="text-danger"></span>?</h6>
+                <p class="text-muted small mb-0">Esta acción no se puede deshacer. El visitante será eliminado permanentemente del directorio.</p>
+            </div>
+            <div class="modal-footer justify-content-center border-0">
+                <button type="button" class=".btn btn-tabla px-4" style="width: 200px;" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-1"></i>Cancelar
+                </button>
+                <a id="confirmDeleteBtn" 
+                        class=".btn btn-danger px-4 text-decoration-none" 
+                        style="width: 200px; border-radius: 24px; display: flex; align-items: center; justify-content: center;" 
+                        href="#">
+                    <i class="bi bi-trash3 me-1"></i> Eliminar
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const loader = document.getElementById('loader-overlay');
+    const loaderText = document.getElementById('loader-text');
+
+    // --- 1. AL RECARGAR O ENTRAR (F5) ---
+    window.addEventListener('load', function() {
+        setTimeout(() => {
+            loader.style.transition = "opacity 0.5s ease";
+            loader.style.opacity = '0';
+            setTimeout(() => {
+                loader.classList.add('d-none');
+                // Reseteamos el texto base para la próxima vez
+                loaderText.innerText = "Procesando Solicitud...";
+            }, 500);
+        }, 300);
+    });
+
+    // --- 2. AL NAVEGAR O CERRAR SESIÓN ---
+    // Usamos delegación de eventos para capturar cualquier clic en el documento
+    document.addEventListener('click', function(e) {
+        // Buscamos si el clic fue en un enlace o dentro de uno (clase menu-item, etc)
+        const link = e.target.closest('a');
+        
+        if (link) {
+            const href = link.getAttribute('href');
+
+            // Si el enlace es válido y no es solo un ancla '#'
+            if (href && href !== '#' && !href.startsWith('javascript:')) {
+                
+                // CASO: Cerrar Sesión
+                if (href.includes('logout') || link.classList.contains('logout')) {
+                    loaderText.innerText = "Cerrando Sesión...";
+                } 
+                // CASO: Cambiar de panel (Cualquier otro enlace del sistema)
+                else {
+                    loaderText.innerText = "Cambiando de panel...";
+                }
+
+                // Mostrar el loader
+                loader.classList.remove('d-none');
+                loader.style.opacity = '1';
+            }
+        }
+    });
+});
+// Dentro de tu document.addEventListener('DOMContentLoaded', ...)
+const visitorForm = document.getElementById('visitorForm');
+if (visitorForm) {
+    visitorForm.addEventListener('submit', function() {
+        const loaderText = document.getElementById('loader-text');
+        const loader = document.getElementById('loader-overlay');
+        
+        loaderText.innerText = "Registrando ingreso en sistema...";
+        loader.classList.remove('d-none');
+        loader.style.opacity = '1';
+    });
+}
+const searchInput = document.getElementById('searchDirectory');
+const visitorItems = document.querySelectorAll('.visitor-item');
+
+searchInput.addEventListener('input', function() {
+    const term = searchInput.value.toLowerCase();
+
+    visitorItems.forEach(item => {
+        const text = item.innerText.toLowerCase();
+        // Si el texto de la tarjeta incluye lo que escribes, se queda; si no, se oculta
+        item.style.display = text.includes(term) ? 'block' : 'none';
+    });
+});
+
+// Función para mostrar el modal de eliminación
+function showDeleteModal(deleteUrl, visitorName) {
+    document.getElementById('visitorName').textContent = visitorName;
+    document.getElementById('confirmDeleteBtn').href = deleteUrl;
+    const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    deleteModal.show();
+}
+</script>
+
+<!-- Footer --> 
+<footer class="footer-bav">
+    <div class="container text-center">
+        <span class="copyright-text">
+            © Copyright 2026 Banco Agrícola de Venezuela. RIF G-20005795-5
+        </span>
+    </div>
+</footer>
+
+
+
+{% endblock %}

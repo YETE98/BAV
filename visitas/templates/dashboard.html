@@ -1,0 +1,372 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Inicio{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="d-flex">
+    <!-- Sidebar de navegación -->
+    
+    <nav class="sidebar">
+        <div class="user-info-sidebar d-flex align-items-center justify-content-start flex-column">
+            <img src="https://ui-avatars.com/api/?name={{ user.username }}&background=83cf26&color=fff" class="avatar-sidebar" alt="Avatar">
+            <div class="text-center mt-1">
+                <span class="text-white small d-block">Bienvenido,</span>
+                <span class="fw-bold text-white">{{ user.username }}</span>
+            </div>
+        </div>
+        <div class="menu-items">
+            <a href="{% url 'dashboard' %}" class="menu-item active">
+                <i class="bi bi-grid-1x2-fill"></i>
+                <span>Inicio</span>
+            </a>
+            <a href="{% url 'visitor_create' %}" class="menu-item">
+                <i class="bi bi-people-fill"></i>
+                <span>Registro</span>
+            </a>
+            <a href="{% url 'visitor_log' %}" class="menu-item">
+                <i class="bi bi-book-half"></i>
+                <span>Visitantes</span>
+            </a>
+            <a href="{% url 'visitor_records' %}" class="menu-item">
+                <i class="bi bi-calendar-check-fill"></i>
+                <span>Presentes</span>
+            </a>
+            <a href="{% url 'visitor_reports' %}" class="menu-item">
+                <i class="bi bi-bar-chart-line-fill"></i>
+                <span>Historial</span>
+            </a>
+            {% if user.is_staff or user.is_superuser %}
+            <a href="{% url 'settings_log' %}" class="menu-item">
+                <i class="bi bi-gear-fill"></i>
+                <span>Configuración</span>
+            </a>
+            <a href="{% url 'settings_users' %}" class="menu-item">
+                <i class="bi bi-person-badge-fill"></i>
+                <span>Usuarios</span>
+            </a>
+            {% endif %}
+        </div>
+                
+        <div class="sidebar-footer pb-5">
+            <a href="{% url 'logout' %}" class="menu-item logout">
+                <i class="bi bi-box-arrow-left"></i>
+                <span>Cerrar Sesión</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Contenido principal -->
+    <main class="main-content" style="margin-left: 260px; width: calc(100% - 260px); min-height: 100px;">
+
+        <!-- Cuerpo del contenido -->
+        <section class="content-body pt-2 p-4">
+
+<div class="row">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm mb-4" style="border-radius: 15px;">
+            <div class="card-header bg-white border-0 pt-3">
+                <h6 class="fw-bold mb-0"><i class="bi bi-bell me-2"></i>Notificaciones Recientes</h6>
+            </div>
+            <div class="card-body">
+                {% if messages %}
+                    {% comment %} Usamos slice:":5" para limitar la lista a 5 elementos {% endcomment %}
+                    {% for message in messages|slice:":5" %}
+                        <div class="alert alert-danger alert-dismissible fade show shadow-sm border-0 mb-3" role="alert" style="border-left: 5px solid #dc3545 !important;">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-exclamation-triangle-fill fs-5 me-3"></i>
+                                <div>
+                                    {{ message }}
+                                </div>
+                            </div>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted small mb-0">No hay notificaciones nuevas.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+            <!-- Tarjetas de estadísticas principales -->
+            <div class="row g-4 mb-4">
+                <div class="col-xl-3 col-md-6">
+                    <div class="card dash-card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center p-4">
+                            <div class="stat-icon mb-3">
+                                <i class="bi bi-people-fill text-success fs-1"></i>
+                            </div>
+                            <h2 class="fw-bold text-success mb-1">{{ visitantes_hoy }}</h2>
+                            <p class="text-muted mb-0 small">Visitantes Hoy</p>
+                            <div class="progress mt-3" style="height: 4px;">
+                            <div class="progress-bar bg-success" style="width: {{ visitantes_pct }}%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6">
+                    <div class="card dash-card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center p-4">
+                            <div class="stat-icon mb-3">
+                                <i class="bi bi-calendar-check-fill text-warning fs-1"></i>
+                            </div>
+                            <h2 class="fw-bold text-warning mb-1">{{ visitantes_activos }}</h2>
+                            <p class="text-muted mb-0 small">Visitantes Activos</p>
+                            <div class="progress mt-3" style="height: 4px;">
+                                <div class="progress-bar bg-warning" style="width: {{ visitantes_activos_pct }}%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6">
+                    <div class="card dash-card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center p-4">
+                            <div class="stat-icon mb-3">
+                                <i class="bi bi-graph-up text-info fs-1"></i>
+                            </div>
+                            <h2 class="fw-bold text-info mb-1">{{ crecimiento_pct }}%</h2>
+                            <p class="text-muted mb-0 small">Crecimiento Mensual</p>
+                            <div class="progress mt-3" style="height: 4px;">
+                                <div class="progress-bar bg-info" style="width: {{ crecimiento_pct }}%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gráficos y contenido adicional -->
+            <div class="row g-4">
+                <!-- Gráfico de visitantes -->
+                <div class="col-xl-8">
+                    <div class="card dash-card border-0 shadow-sm">
+                        <div class="card-header bg-white border-0 py-3">
+                            <h5 class="card-title mb-0 text-success fw-bold">
+                                <i class="bi bi-bar-chart-line me-2"></i>Visitantes por Día
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="visitorsChart" height="300"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+<!-- Actividad reciente -->
+<div class="col-xl-4">
+    <div class="card dash-card border-0 shadow-sm h-100">
+        
+        <!-- Header -->
+        <div class="card-header bg-white border-0 py-3">
+            <h5 class="card-title mb-0 text-success fw-bold">
+                <i class="bi bi-clock-history me-2"></i>Actividad Reciente
+            </h5>
+        </div>
+
+        <!-- Body -->
+        <div class="card-body p-0">
+            <div class="activity-list">
+
+                {% for actividad in actividades_recientes %}
+                <div class="activity-item-compact">
+                    <div class="d-flex align-items-center">
+
+                        <!-- Icono -->
+                        <div class="activity-icon bg-{% if 'login' in actividad.accion|lower %}success{% elif 'crear' in actividad.accion|lower or 'registrar' in actividad.accion|lower %}primary{% elif 'eliminar' in actividad.accion|lower or 'borrar' in actividad.accion|lower %}danger{% else %}info{% endif %} text-white rounded-circle">
+                            <i class="bi bi-{% if 'login' in actividad.accion|lower %}person-check{% elif 'crear' in actividad.accion|lower or 'registrar' in actividad.accion|lower %}person-plus{% elif 'eliminar' in actividad.accion|lower or 'borrar' in actividad.accion|lower %}person-dash{% else %}activity{% endif %}"></i>
+                        </div>
+
+                        <!-- Texto -->
+                        <div class="flex-grow-1">
+                            <p class="fw-bold text-dark">{{ actividad.accion }}</p>
+                            <p class="text-muted">Hace {{ actividad.fecha_hora|timesince }}</p>
+                        </div>
+
+                    </div>
+                </div>
+                {% empty %}
+                <div class="activity-item-compact text-center">
+                    <p class="text-muted">No hay actividades recientes</p>
+                </div>
+                {% endfor %}
+
+            </div>
+        </div>
+    </div>
+</div>
+            </div>
+
+
+            <!-- Accesos rápidos -->
+            <div class="row g-4 mt-2">
+                <div class="col-12">
+                    <div class="card dash-card border-0 shadow-sm">
+                        <div class="card-header bg-white border-0 py-3">
+                            <h5 class="card-title mb-0 text-success fw-bold">
+                                <i class="bi bi-lightning-charge me-2"></i>Accesos Rápidos
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-3">
+                                    <a href="{% url 'visitor_create' %}" class="text-decoration-none">
+                                        <div class="quick-access-card text-center p-4 border rounded-3 hover-lift">
+                                            <i class="bi bi-person-plus-fill text-success fs-2 mb-2"></i>
+                                            <h6 class="mb-0">Registrar Visitante</h6>
+                                        </div>
+                                    </a>
+                                </div>
+                                <div class="col-md-3">
+                                    <a href="{% url 'visitor_log' %}" class="text-decoration-none">
+                                        <div class="quick-access-card text-center p-4 border rounded-3 hover-lift">
+                                            <i class="bi bi-book-fill text-primary fs-2 mb-2"></i>
+                                            <h6 class="mb-0">Gestionar Visitantes</h6>
+                                        </div>
+                                    </a>
+                                </div>
+                                <div class="col-md-3">
+                                    <a href="{% url 'visitor_records' %}" class="text-decoration-none">
+                                        <div class="quick-access-card text-center p-4 border rounded-3 hover-lift">
+                                            <i class="bi bi-calendar-check-fill text-warning fs-2 mb-2"></i>
+                                            <h6 class="mb-0">Visitas Activas</h6>
+                                        </div>
+                                    </a>
+                                </div>
+                                <div class="col-md-3">
+                                    <a href="{% url 'visitor_reports' %}" class="text-decoration-none">
+                                        <div class="quick-access-card text-center p-4 border rounded-3 hover-lift">
+                                            <i class="bi bi-bar-chart-line-fill text-info fs-2 mb-2"></i>
+                                            <h6 class="mb-0">Historial de Visitas</h6>
+                                        </div>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
+
+<div id="loader-overlay" class="loader-overlay">
+    <div class="loader-content">
+        <div class="spinner-bav"></div>
+        <p id="loader-text" class="mt-3 text-white fw-bold">Procesando Solicitud...</p>
+    </div>
+</div>
+
+<!-- Footer -->
+<footer class="footer-bav">
+    <div class="container text-center">
+        <span class="copyright-text">
+            © Copyright 2026 Banco Agrícola de Venezuela. RIF G-20005795-5
+        </span>
+    </div>
+</footer>
+
+<!-- Scripts para gráficos -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script type="application/json" id="chart-labels">{{ chart_labels_json|safe }}</script>
+<script type="application/json" id="chart-data">{{ chart_data_json|safe }}</script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Gráfico de visitantes
+    const ctx = document.getElementById('visitorsChart').getContext('2d');
+    const chartLabels = JSON.parse(document.getElementById('chart-labels').textContent);
+    const chartData = JSON.parse(document.getElementById('chart-data').textContent);
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: chartLabels,
+            datasets: [{
+                label: 'Visitantes',
+                data: chartData,
+                borderColor: '#83cf26',
+                backgroundColor: 'rgba(131, 207, 38, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(0,0,0,0.05)'
+                    }
+                },
+                x: {
+                    grid: {
+                        color: 'rgba(0,0,0,0.05)'
+                    }
+                }
+            }
+        }
+    });
+});
+// Seleccionamos todos los enlaces del menú y el loader
+
+document.addEventListener('DOMContentLoaded', function() {
+    const loader = document.getElementById('loader-overlay');
+    const loaderText = document.getElementById('loader-text');
+
+    // --- 1. AL RECARGAR O ENTRAR (F5) ---
+    window.addEventListener('load', function() {
+        setTimeout(() => {
+            loader.style.transition = "opacity 0.5s ease";
+            loader.style.opacity = '0';
+            setTimeout(() => {
+                loader.classList.add('d-none');
+                // Reseteamos el texto base para la próxima vez
+                loaderText.innerText = "Procesando Solicitud...";
+            }, 500);
+        }, 300);
+    });
+
+    // --- 2. AL NAVEGAR O CERRAR SESIÓN ---
+    // Usamos delegación de eventos para capturar cualquier clic en el documento
+    document.addEventListener('click', function(e) {
+        // Buscamos si el clic fue en un enlace o dentro de uno (clase menu-item, etc)
+        const link = e.target.closest('a');
+        
+        if (link) {
+            const href = link.getAttribute('href');
+
+            // Si el enlace es válido y no es solo un ancla '#'
+            if (href && href !== '#' && !href.startsWith('javascript:')) {
+                
+                // CASO: Cerrar Sesión
+                if (href.includes('logout') || link.classList.contains('logout')) {
+                    loaderText.innerText = "Cerrando Sesión...";
+                } 
+                // CASO: Cambiar de panel (Cualquier otro enlace del sistema)
+                else {
+                    loaderText.innerText = "Cambiando de panel...";
+                }
+
+                // Mostrar el loader
+                loader.classList.remove('d-none');
+                loader.style.opacity = '1';
+            }
+        }
+    });
+});
+
+</script>
+
+
+
+{% endblock %}
